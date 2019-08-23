@@ -12,6 +12,15 @@ function register_SURF(Parent, xy, xml_files, fpath, nm, pos, D, filename, lgr, 
     for t=1:length(nm) %for each region
         lg = (length(pos)/2)+t;
 
+        %find which marker images are already registered
+        
+        rrdone = dir(fullfile(D, 'Registered_Regions',nm{t}));
+        rrname = cell(1,length(rrdone));
+        for y=1:length(rrdone)
+            rrname{y} = rrdone(y).name(1:end-4);
+        end
+        
+        %read in nuc file and get image info
         nuc_ref = imread(image,1,'PixelRegion', pixel_region{lg});
         RefB =  nuc_ref(:,:,3); %blue channel
         RefR = nuc_ref(:,:,2); %red channel
@@ -27,13 +36,6 @@ function register_SURF(Parent, xy, xml_files, fpath, nm, pos, D, filename, lgr, 
         tags.PlanarConfiguration = Tiff.PlanarConfiguration.Chunky;
         tags.Software = 'MATLAB';
         
-        %find which marker images are already registered
-        
-        rrdone = dir(fullfile(D, 'Registered_Regions',nm{t}));
-        rrname = cell(1,length(rrdone));
-        for y=1:length(rrdone)
-            rrname{y} = rrdone(y).name(1:end-4);
-        end
         
         %Find SURF features in Nuclei Ref and select strongest
         ptsRef1 = detectSURFFeatures(RefB); 
@@ -41,9 +43,8 @@ function register_SURF(Parent, xy, xml_files, fpath, nm, pos, D, filename, lgr, 
         [featuresRef1, validPtsRef1] = extractFeatures(RefB, ptsRef1);
         outputView1 = imref2d( [size(RefB,1) size(RefB,2)]);
    
-        %if file exists already OR if its the nuclei file go to next
-        %indx
         for z = 1:length(filename) %for each marker file
+              %if file exists already OR if nuclei file go to next indx
             donefilename = (sprintf("reg_%s_%s", filename{z}, nm{t}));
             manregdone = (sprintf("reg_NONREG_%s_%s", filename{z}, nm{t}));
             next = regexp(filename{z},skip,'match');
@@ -56,6 +57,7 @@ function register_SURF(Parent, xy, xml_files, fpath, nm, pos, D, filename, lgr, 
                continue
             end
 
+%read in marker image !!!! TO CHANGE :::: REGION TO READ IN!
             wObj = imread(fpath{z},'PixelRegion', lgr{t});
             channel = { wObj(:,:,1),  wObj(:,:,2),  wObj(:,:,3)}; %split channels on HR
             Obj1=channel{3};
