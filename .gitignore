@@ -1,0 +1,10 @@
+#files to be ignored from previous development
+registerLR_SURF.m
+registerRegion_surf.m
+functions_test.m
+
+
+
+#files generated while working to be ignored
+*.m~
+

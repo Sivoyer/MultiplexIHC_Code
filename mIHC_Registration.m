@@ -1,9 +1,11 @@
-%% Most current version 02/13/19 --**--
+%% Most current version 10/14/19 --**--
 % sivagnan@ohsu.edu -- do not distribute
 
-% Uses xml to read annotated ROI regions
-% Make sure regions were selected in this order: from upper left corner
-% Order of boxes: small1, small2, small3, large1, large2, large3 etc.
+% Uses xml to read annotated ROI regions from ImageScope (Aperio Leica) SVS
+% image annotation file.
+% Make sure regions were drawn as rectangles starting from the upper left corner
+% Each box is one ROI (larger registration region is automatically
+% generated)
 
 %Checks nuclei blue and red for matching keypoints
 
@@ -13,7 +15,8 @@
 % name 'reg_' prepended.
 
 %--**-- UPDATES--**--: 
-% recognizes reg and NONREG files in Registered_Regions
+% No need for large region boxes. If they are on the XML, you will get an
+% ROI for EACH box, large and small. --remove in 30d
 % Creates a directory called Registration_Check in the Parent dir and
 % writes low res image of each region for quick eval of registered images
 
@@ -28,15 +31,14 @@ if exist(checkname, 'dir') ~= 1 || 7
 end
 
 imageset = dir(fullfile(Parent));
-for a = 3:length(imageset)
+for a = 5:length(imageset)
     if imageset(a).name == "Registration_Check"
         continue
     else
      [D, xml_files, svsfiles, fpath, filename, numfiles] = get_image_sets(imageset(a), checkname);
      [xy]= parse_xml(xml_files);
-     [idx, rois, pos, k, pixel_region, R, Rlg, lgr, nm, smread, smcrop] = sort_regions(D, filename, xy, xml_files);
-     register_SURF(Parent, xy, xml_files, fpath, nm, pos, D, filename, lgr, smcrop, pixel_region);
-
+     [image, maxcol, maxrow, pixel_region_buff, cropregion, idx, rois, pos, k,nm] = sort_regions(D, filename, xy, xml_files, fpath);
+     register_SURF(Parent,fpath, nm, D, filename,cropregion, pixel_region_buff, image, k);
     end
 end
 
