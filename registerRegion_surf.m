@@ -19,8 +19,7 @@ function registerRegion_surf(Parent, marker_tform, fpath, filename, image, k, nm
         tags.PlanarConfiguration = Tiff.PlanarConfiguration.Chunky;
         tags.Software = 'MATLAB';
         
-        
-        %Find SURF features in Nuclei Ref and select strongest
+         %Find SURF features in Nuclei Ref and select strongest
         ptsRef1 = detectSURFFeatures(RefB); 
         ptsRef1 = ptsRef1.selectStrongest(min(n_smpl, length(ptsRef1)));
         [featuresRef1, validPtsRef1] = extractFeatures(RefB, ptsRef1);
@@ -45,7 +44,7 @@ function registerRegion_surf(Parent, marker_tform, fpath, filename, image, k, nm
 
             fprintf("Processing %s ...\n", filename{z});
 
-            %apply slide transform
+ %apply slide transform- needs a scale factor to apply L4 to L1
             warped = cell(1, length(channel));
             for u=1:length(channel)
                    warped{u} = imwarp(channel{u}, marker_tform{z}, 'OutputView', outputView1);
