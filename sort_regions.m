@@ -1,46 +1,56 @@
 
  
-function [idx, rois, pos, k, pixel_region, R, nm, smread, smcrop] = sort_regions(D, filename, xy, xml_files)
+function [image, maxcol, maxrow, pixel_region_buff, cropregion, idx, rois, pos, k,nm] = sort_regions(D, filename, xy, xml_files, fpath)
     rois = [xy, upper(xml_files.name(1:end-4))]; %save each xml ROI
     idx = length(rois);
     k = find(contains(filename, rois(idx))); %get index of image
     pos = cell(1, length(rois)-1);
+    image = fpath{k};
     
+    imgsizeinfo = imfinfo(image);
+    maxcol = imgsizeinfo(1).Width;
+    maxrow = imgsizeinfo(1).Height;
+    
+    %'position' formatting
     for r = 1:length(rois)-1 
         row = [rois{r}(6) rois{r}(6)+(rois{r}(8) - rois{r}(7))];
         col = [rois{r}(1) rois{r}(1)+(rois{r}(2) - rois{r}(1))];
         pos{r} = [row,col]; %[row start, row stop, col start, col stop]
     end
-    % pos{1} = 1.0040    1.4995    2.6968    3.1923
-    pixel_region = cell(1,length(pos));
-    for i = 1:length(pos)
-        pixel_region{i} = {pos{i}([1,2]),pos{i}([3,4])};
-    end
-
-    %all regions
-    R = cell(1, length(pos));
-    for y = 1:length(pos)
-        R{y} = [pos{y}(3) pos{y}(1) (pos{y}(4) - pos{y}(3)) (pos{y}(2) - pos{y}(1))];    
-    end
-
-    regionnum = length(R);
-    fprintf("%d regions found on this slide\n", regionnum);
+    % pos{1} = 0.4541    0.7053    1.7944    2.4700
     
-    % set read and crop region variables
-        %read and crop should be the same now
-        %TO DO: reduce this loop to create 1 variable for storing the region coordinates in crop
-        %and read formats
-    smread = cell(1, length(R));
-    smcrop = cell(1, length(R));
-
-    for g = 1:length(Rlg)
-        smread{g} = {[R{g}(2), (R{g}(2)+R{g}(4))], [R{g}(1), (R{g}(1)+R{g}(3))]};
-        smcrop{g} = [R{g}(1), R{g}(2), R{g}(3), R{g}(4)];
+    %pixel region formatting for reading with buffer
+    buff=500;
+    pixel_region_buff = cell(1,length(pos));
+    cropregion = cell(1,length(pos));
+    for i = 1:length(pos)
+       rowstart = pos{i}([1])-buff;
+       rowstop =pos{i}([2])+buff; 
+       colstart = pos{i}([3])-buff;
+       colstop = pos{i}([4])+buff;
+       if colstart <= 0
+           colstart = 1;
+       end
+       if rowstart <=0
+           rowstart = 1;
+       end
+       if colstop > maxcol
+           colstop = maxcol;
+       end
+       if rowstop > maxrow
+           rowstop = maxrow;
+       end
+     pixel_region_buff{i} = {[rowstart, rowstop],[colstart, colstop]};
+     cropregion{i} = [buff, buff, (pos{i}([4])-pos{i}([3])), (pos{i}([2])-pos{i}([1]))];
     end
+    
+    regionnum = length(pixel_region_buff);
+    fprintf("%d regions found on this slide\n", regionnum);
+%     
     
    %create region folder struture inside of Registered_Regions folder
-    nm = cell(1, length(regionnum));
-    for w=1:length(regionnum)
+    nm = cell(1, regionnum);
+    for w=1:regionnum
         if w <= 9
             nm{w} = sprintf('ROI0%d', w);
         else

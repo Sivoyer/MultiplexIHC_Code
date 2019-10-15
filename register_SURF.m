@@ -1,17 +1,17 @@
 
 
-function register_SURF(Parent, xy, xml_files, fpath, nm, pos, D, filename, lgr, smcrop, pixel_region)
-    %set max number of features
-    rois = [xy, upper(xml_files.name(1:end-4))]; %save each xml ROI
+function register_SURF(Parent,fpath, nm, D, filename,cropregion, pixel_region_buff, image, k)
     n_smpl = 100000; % depend (maximum number of features)
-    skip = {'NUCLEI', 'HEM', 'HEMATOXYLIN', 'FIRSTHEMA', 'FIRSTH', 'FIRSTHEM1', 'SECONDHEM'};
-    idx = length(rois);
-    k = find(contains(filename, rois(idx))); %get index of image
-    image = fpath{k}; %nuclei image pathname
+    skip = {'NUCLEI', 'HEM', 'HEMATOXYLIN', 'FIRSTHEMA', 'FIRSTH', 'FIRSTHEM1', 'SECONDHEM'};    
+
+%set max number of features
+    %rois = [xy, upper(xml_files.name(1:end-4))]; %save each xml ROI
+    %idx = length(rois);
+    %k = find(contains(filename, rois(idx))); %get index of image
+    %image = fpath{k}; %nuclei image pathname
         
     for t=1:length(nm) %for each region
-        lg = (length(pos)/2)+t;
-
+       
         %find which marker images are already registered
         
         rrdone = dir(fullfile(D, 'Registered_Regions',nm{t}));
@@ -21,7 +21,7 @@ function register_SURF(Parent, xy, xml_files, fpath, nm, pos, D, filename, lgr, 
         end
         
         %read in nuc file and get image info
-        nuc_ref = imread(image,1,'PixelRegion', pixel_region{lg});
+        nuc_ref = imread(image,1,'PixelRegion', pixel_region_buff{t});
         RefB =  nuc_ref(:,:,3); %blue channel
         RefR = nuc_ref(:,:,2); %red channel
         
@@ -57,8 +57,7 @@ function register_SURF(Parent, xy, xml_files, fpath, nm, pos, D, filename, lgr, 
                continue
             end
 
-%read in marker image !!!! TO CHANGE :::: REGION TO READ IN!
-            wObj = imread(fpath{z},'PixelRegion', lgr{t});
+            wObj = imread(fpath{z},'PixelRegion', pixel_region_buff{t});
             channel = { wObj(:,:,1),  wObj(:,:,2),  wObj(:,:,3)}; %split channels on HR
             Obj1=channel{3};
 
@@ -177,7 +176,7 @@ function register_SURF(Parent, xy, xml_files, fpath, nm, pos, D, filename, lgr, 
             if exist(new_temp, 'file') ~=2  %if file doesn't exist (check again)
                 new_img = sprintf('%s/Registered_Regions/%s/reg_%s_%s.tif', D, nm{t}, filename{z}, nm{t});
                 reg_check_img = sprintf('%s/Registration_Check/regck_%s_%s.tif', Parent, filename{z}, nm{t});
-                reg_crop = imcrop(Registered, smcrop{t});
+                reg_crop = imcrop(Registered, cropregion{t});
                 imwrite(reg_crop, new_img);
                 fprintf("%s %s image registered! \n", nm{t}, filename{z});
                 reg_crop_LR = imresize(reg_crop, 0.0625);
@@ -195,7 +194,7 @@ function register_SURF(Parent, xy, xml_files, fpath, nm, pos, D, filename, lgr, 
         end
         nuc_crop_name = sprintf('%s/Registered_Regions/%s/NUCLEI_%s_%s.tif', D, nm{t}, filename{k}, nm{t});
         nuc_check_img = sprintf('%s/Registration_Check/NUCLEIck_%s_%s.tif', Parent, filename{k}, nm{t});
-        nuc_crop = imcrop(nuc_ref, smcrop{t});
+        nuc_crop = imcrop(nuc_ref, cropregion{t});
         nuc_crop_LR = imresize(nuc_crop, 0.0625);
         imwrite(nuc_crop, nuc_crop_name);
         imwrite(nuc_crop_LR, nuc_check_img);
