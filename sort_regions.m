@@ -20,7 +20,7 @@ function [image, maxcol, maxrow, pixel_region_buff, cropregion, idx, rois, pos, 
     % pos{1} = 0.4541    0.7053    1.7944    2.4700
     
     %pixel region formatting for reading with buffer
-    buff=500;
+    buff=1500;
     pixel_region_buff = cell(1,length(pos));
     cropregion = cell(1,length(pos));
     for i = 1:length(pos)
