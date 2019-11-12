@@ -31,7 +31,7 @@ if exist(checkname, 'dir') ~= 1 || 7
 end
 
 imageset = dir(fullfile(Parent));
-for a = 5:length(imageset)
+for a = 3:length(imageset)
     if imageset(a).name == "Registration_Check"
         continue
     else

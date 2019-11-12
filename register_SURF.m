@@ -89,9 +89,10 @@ function register_SURF(Parent,fpath, nm, D, filename,cropregion, pixel_region_bu
                     close(rrnuc); %close the image
                 end
                 continue
-                
-            else
-            ptsObj = ptsObj.selectStrongest(min(n_smpl, length(ptsObj)));
+            end
+            
+            n_pts = 10000;
+            ptsObj = ptsObj.selectStrongest(min(n_pts, length(ptsObj)));
             [featuresObj, validPtsObj] = extractFeatures(Obj1, ptsObj);
 
             indxPairs = matchFeatures(featuresRef1, featuresObj, 'MaxRatio', 0.8, 'Unique', true);
@@ -103,10 +104,14 @@ function register_SURF(Parent,fpath, nm, D, filename,cropregion, pixel_region_bu
             [tform, inlierDistorted, ~, status] = estimateGeometricTransform(...
                          matchedObj, matchedRef,  'similarity', 'MaxNumTrials',100000, 'Confidence',96, 'MaxDistance', 1.8);
 
+            
+           % imshowpair(wObj, RefB,'Scaling', 'Joint', 'ColorChannels', 'magenta-green');
+           % imshowpair(wObj, RefB,'falsecolor');
+
             %disp(length(inlierDistorted))
             kp = length(inlierDistorted);
             fprintf("%d matching keypoints found out of %d in Ch1 ref\n", kp, ip);
-            end
+            
             
             if kp <= 5 %if not enough kp
                warning('Hm, may not have enough matching keypoints to register %s under this channel- trying another channel...', filename{z});   
@@ -131,7 +136,7 @@ function register_SURF(Parent,fpath, nm, D, filename,cropregion, pixel_region_bu
                 if kp2 <= 5 
                     warning('Not have enough matching keypoints to register %s under Ch2 ref, either. Checking last option.', filename{z});   
                     ptsObj2 = detectSURFFeatures(Obj2);
-                    ptsObj2 = ptsObj2.selectStrongest(min(n_smpl, length(ptsObj2)));
+                    ptsObj2 = ptsObj2.selectStrongest(min(n_pts, length(ptsObj2)));
                     [featuresObj2, validPtsObj2] = extractFeatures(Obj2, ptsObj2);
 
                     indxPairs3 = matchFeatures(featuresRef2, featuresObj2, 'MaxRatio', 0.8, 'Unique', true);
@@ -143,23 +148,28 @@ function register_SURF(Parent,fpath, nm, D, filename,cropregion, pixel_region_bu
                          matchedObj3, matchedRef3,  'similarity', 'MaxNumTrials',100000, 'Confidence',96, 'MaxDistance', 1.8);
 
                      kp3 = length(inlierDistorted3);
-                     fprintf("%d matching keypoints found out of %d in Ch1 obj\n", kp3, ip3);
+                     fprintf("%d matching keypoints found out of %d in Ch3 obj\n", kp3, ip3);
 
-                     
                      Keypoints = [kp, kp2, kp3];
                      Transforms = [tform, tform2, tform3];
                      
-                    [max, maxindex] = max(Keypoints);
-                    %if kp3 <= 5 %if not enough kp, warn and select higher KP
-          
-                 end
+                     [~, maxindex] = max(Keypoints);
+                     tformf = Transforms(maxindex);
+
+                else
             
+                 Keypoints = [kp, kp2];
+                 Transforms = [tform, tform2];
+                     
+                 [~, maxindex] = max(Keypoints);
+          
                 %select which transformation to use (nuclei red or blue) based
                 %on better keypoints
                 
-                tform = Transforms(maxindex);
+                    
+                tformf = Transforms(maxindex);
                 fprintf("Ch3:Ch3 %d kp, Ch1:Ch3 %d kp, Ch1:Ch1 %d kp - selecting channel with more kp", kp, kp2, kp3);
-                
+                end
             end
         
             
@@ -167,7 +177,7 @@ function register_SURF(Parent,fpath, nm, D, filename,cropregion, pixel_region_bu
             warped = cell(1, length(channel));
             if status == 0
                 for u=1:length(channel)
-                       warped{u} = imwarp(channel{u}, tform, 'OutputView', outputView1);
+                       warped{u} = imwarp(channel{u}, tformf, 'OutputView', outputView1);
                 end
             end
             [~, msgid] = lastwarn;
