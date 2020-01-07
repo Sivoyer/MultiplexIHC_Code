@@ -1,8 +1,7 @@
 # MultiplexIHC_Code
-MultiplexIHC registration in Matlab code
 
-Run the matlab file: mIHC_Registration.m to register
-select *parent directory as input when prompted.
+Multiplex IHC Image analysis pipeline provides a method to analyze cohorts of multiplexed stains on single tissue slides in a batch. The output of the pipeline is a .CSV with single cells as rows and marker stain intensity, or any other exported measured feature from cell profiler, as column variables.
 
-*Parent directory is the directory that contains all slide folders 
+
+ 
 
