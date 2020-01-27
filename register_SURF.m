@@ -76,14 +76,14 @@ function register_SURF(Parent,fpath, nm, D, filename,cropregion, pixel_region_bu
                 if exist(redo, 'dir') ~= 1 || 7
                     mkdir(redo);
                 end
-                imnamed = Tiff(non_reg, 'w8'); 
+                imnamed = Tiff(non_reg); 
                 setTag(imnamed, tags);
                 write(imnamed, wObj, 'tif');
                 fprintf("Bummer, %s was not automatically registered, please try manually. Sorry!\n", filename{z});
                 %save og nuclei also
                 new_nuc = sprintf('%s/NUCLEI_%s_%s.tif', redo, filename{k}, nm{t});
                 if exist(new_nuc, 'file') ~= 2
-                    rrnuc = Tiff(sprintf('%s/NUCLEI_%s_%s.tif', redo, filename{k}, nm{t}), 'w8');
+                    rrnuc = Tiff(sprintf('%s/NUCLEI_%s_%s.tif', redo, filename{k}, nm{t}));
                     setTag(rrnuc, tags); %set Bigtiff tags
                     write(rrnuc, nuc_ref); %writes the bigtiff image
                     close(rrnuc); %close the image
@@ -154,7 +154,10 @@ function register_SURF(Parent,fpath, nm, D, filename,cropregion, pixel_region_bu
                      Transforms = [tform, tform2, tform3];
                      
                      [~, maxindex] = max(Keypoints);
-                     tformf = Transforms(maxindex);
+                     tform = Transforms(maxindex);
+                     
+                     fprintf("Ch3:Ch3 %d kp, Ch1:Ch3 %d kp, Ch1:Ch1 %d kp - selecting channel with more kp", kp, kp2, kp3);
+
 
                 else
             
@@ -165,10 +168,9 @@ function register_SURF(Parent,fpath, nm, D, filename,cropregion, pixel_region_bu
           
                 %select which transformation to use (nuclei red or blue) based
                 %on better keypoints
-                
-                    
-                tformf = Transforms(maxindex);
-                fprintf("Ch3:Ch3 %d kp, Ch1:Ch3 %d kp, Ch1:Ch1 %d kp - selecting channel with more kp", kp, kp2, kp3);
+                fprintf("Ch3:Ch3 %d kp, Ch1:Ch3 %d kp, Ch1:Ch1 %d kp - selecting channel with more kp", kp, kp2);
+
+                tform = Transforms(maxindex);
                 end
             end
         
@@ -177,7 +179,7 @@ function register_SURF(Parent,fpath, nm, D, filename,cropregion, pixel_region_bu
             warped = cell(1, length(channel));
             if status == 0
                 for u=1:length(channel)
-                       warped{u} = imwarp(channel{u}, tformf, 'OutputView', outputView1);
+                       warped{u} = imwarp(channel{u}, tform, 'OutputView', outputView1);
                 end
             end
             [~, msgid] = lastwarn;
@@ -190,14 +192,14 @@ function register_SURF(Parent,fpath, nm, D, filename,cropregion, pixel_region_bu
                 if exist(redo, 'dir') ~= 1 || 7
                     mkdir(redo);
                 end
-                imnamed = Tiff(non_reg, 'w8'); 
+                imnamed = Tiff(non_reg); 
                 setTag(imnamed, tags);
                 write(imnamed, wObj, 'tif');
                 fprintf("Bummer, %s was not automatically registered, please try manually. Sorry!\n", filename{z});
                 %save og nuclei also
                 new_nuc = sprintf('%s/NUCLEI_%s_%s.tif', redo, filename{k}, nm{t});
                 if exist(new_nuc, 'file') ~= 2
-                    rrnuc = Tiff(sprintf('%s/NUCLEI_%s_%s.tif', redo, filename{k}, nm{t}), 'w8');
+                    rrnuc = Tiff(sprintf('%s/NUCLEI_%s_%s.tif', redo, filename{k}, nm{t}));
                     setTag(rrnuc, tags); %set Bigtiff tags
                     write(rrnuc, nuc_ref); %writes the bigtiff image
                     close(rrnuc); %close the image
