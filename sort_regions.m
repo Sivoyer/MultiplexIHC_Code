@@ -11,13 +11,14 @@ function [image, maxcol, maxrow, pixel_region_buff, cropregion, idx, rois, pos, 
     maxcol = imgsizeinfo(1).Width;
     maxrow = imgsizeinfo(1).Height;
     
-    %'position' formatting
+    %'position' formatting for SVS image from ScanScope .XML file
     for r = 1:length(rois)-1 
         row = [rois{r}(6) rois{r}(6)+(rois{r}(8) - rois{r}(7))];
         col = [rois{r}(1) rois{r}(1)+(rois{r}(2) - rois{r}(1))];
         pos{r} = [row,col]; %[row start, row stop, col start, col stop]
     end
     % pos{1} = 0.4541    0.7053    1.7944    2.4700
+    
     
     %pixel region formatting for reading with buffer
     buff=1500;
@@ -44,7 +45,7 @@ function [image, maxcol, maxrow, pixel_region_buff, cropregion, idx, rois, pos, 
      cropregion{i} = [buff, buff, (pos{i}([4])-pos{i}([3])), (pos{i}([2])-pos{i}([1]))];
     end
     
-    regionnum = length(pixel_region_buff);
+    regionnum = length(pos);
     fprintf("%d regions found on this slide\n", regionnum);
 %     
     

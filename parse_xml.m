@@ -6,8 +6,6 @@ function [xy]= parse_xml(xml_files)
     Regions =xDoc.getElementsByTagName('Region'); % get a list of all the region tags
     for regioni = 0:Regions.getLength-1
         Region=Regions.item(regioni);  % for each region tag
-        area = Region.getAttribute('Area');
-        AR = str2double(area);
         %get a list of all the vertexes (which are in order)
         verticies= Region.getElementsByTagName('Vertex');
         xy{regioni+1}=zeros(verticies.getLength-1,2); %allocate space for them
