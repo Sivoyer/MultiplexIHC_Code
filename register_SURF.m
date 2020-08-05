@@ -60,36 +60,39 @@ function register_SURF(Parent,fpath, nm, D, filename,cropregion, pixel_region_bu
             wObj = imread(fpath{z},'PixelRegion', pixel_region_buff{t});
             channel = { wObj(:,:,1),  wObj(:,:,2),  wObj(:,:,3)}; %split channels on HR
             Obj1=channel{3};
+            Obj2=channel{1};
 
             fprintf("Processing %s ...\n", filename{z});
 
             %get SURF features from determined object channel
             ptsObj = detectSURFFeatures(Obj1);
-            
+
             %if NO points found (rare)
-            if ptsObj.Count == 0    
+
+            if ptsObj.Count == 0                
                 redo = sprintf('%s/Redo_%s', D, nm{t});
                 non_reg = sprintf('%s/nonreg_%s_%s.tif', redo, filename{z}, nm{t});
                 warning('off', 'MATLAB:MKDIR:DirectoryExists'); 
                 if exist(redo, 'dir') ~= 1 || 7
                     mkdir(redo);
                 end
-                imnamed = Tiff(non_reg, 'w8'); 
+                imnamed = Tiff(non_reg); 
                 setTag(imnamed, tags);
                 write(imnamed, wObj, 'tif');
                 fprintf("Bummer, %s was not automatically registered, please try manually. Sorry!\n", filename{z});
                 %save og nuclei also
                 new_nuc = sprintf('%s/NUCLEI_%s_%s.tif', redo, filename{k}, nm{t});
                 if exist(new_nuc, 'file') ~= 2
-                    rrnuc = Tiff(sprintf('%s/NUCLEI_%s_%s.tif', redo, filename{k}, nm{t}), 'w8');
+                    rrnuc = Tiff(sprintf('%s/NUCLEI_%s_%s.tif', redo, filename{k}, nm{t}));
                     setTag(rrnuc, tags); %set Bigtiff tags
                     write(rrnuc, nuc_ref); %writes the bigtiff image
                     close(rrnuc); %close the image
                 end
                 continue
-            else
+            end
             
-            ptsObj = ptsObj.selectStrongest(min(n_smpl, length(ptsObj)));
+            n_pts = 10000;
+            ptsObj = ptsObj.selectStrongest(min(n_pts, length(ptsObj)));
             [featuresObj, validPtsObj] = extractFeatures(Obj1, ptsObj);
 
             indxPairs = matchFeatures(featuresRef1, featuresObj, 'MaxRatio', 0.8, 'Unique', true);
@@ -101,10 +104,15 @@ function register_SURF(Parent,fpath, nm, D, filename,cropregion, pixel_region_bu
             [tform, inlierDistorted, ~, status] = estimateGeometricTransform(...
                          matchedObj, matchedRef,  'similarity', 'MaxNumTrials',100000, 'Confidence',96, 'MaxDistance', 1.8);
 
+            
+           % imshowpair(wObj, RefB,'Scaling', 'Joint', 'ColorChannels', 'magenta-green');
+           % imshowpair(wObj, RefB,'falsecolor');
+
             %disp(length(inlierDistorted))
             kp = length(inlierDistorted);
             fprintf("%d matching keypoints found out of %d in Ch1 ref\n", kp, ip);
-            end
+            
+            
             if kp <= 5 %if not enough kp
                warning('Hm, may not have enough matching keypoints to register %s under this channel- trying another channel...', filename{z});   
             
@@ -125,19 +133,47 @@ function register_SURF(Parent,fpath, nm, D, filename,cropregion, pixel_region_bu
                 kp2 = length(inlierDistorted2);
                 fprintf("%d matching keypoints found out of %d in Ch2 ref\n", kp2, ip2);
                 
-%                 if kp2 <= 5 %if not enough kp, warn and select higher KP
-%                     warning('Check the output.. still may not have enough matching keypoints to register %s under Ch2 ref, either.', filename{z});   
-%                 end
+                if kp2 <= 5 
+                    warning('Not have enough matching keypoints to register %s under Ch2 ref, either. Checking last option.', filename{z});   
+                    ptsObj2 = detectSURFFeatures(Obj2);
+                    ptsObj2 = ptsObj2.selectStrongest(min(n_pts, length(ptsObj2)));
+                    [featuresObj2, validPtsObj2] = extractFeatures(Obj2, ptsObj2);
+
+                    indxPairs3 = matchFeatures(featuresRef2, featuresObj2, 'MaxRatio', 0.8, 'Unique', true);
+                    matchedRef3 = validPtsRef2(indxPairs3(:,1));
+                    matchedObj3 = validPtsObj2(indxPairs3(:,2));
+                    ip3 = length(indxPairs3);
+
+                    [tform3, inlierDistorted3, ~, status] = estimateGeometricTransform(...
+                         matchedObj3, matchedRef3,  'similarity', 'MaxNumTrials',100000, 'Confidence',96, 'MaxDistance', 1.8);
+
+                     kp3 = length(inlierDistorted3);
+                     fprintf("%d matching keypoints found out of %d in Ch3 obj\n", kp3, ip3);
+
+                     Keypoints = [kp, kp2, kp3];
+                     Transforms = [tform, tform2, tform3];
+                     
+                     [~, maxindex] = max(Keypoints);
+                     tform = Transforms(maxindex);
+                     
+                     fprintf("Ch3:Ch3 %d kp, Ch1:Ch3 %d kp, Ch1:Ch1 %d kp - selecting channel with more kp", kp, kp2, kp3);
+
+
+                else
             
+                 Keypoints = [kp, kp2];
+                 Transforms = [tform, tform2];
+                     
+                 [~, maxindex] = max(Keypoints);
+          
                 %select which transformation to use (nuclei red or blue) based
                 %on better keypoints
-                if kp < kp2
-                    tform = tform2;
-                    fprintf("Ch1: %d kp, Ch2: %d kp - selecting channel with more kp", kp, kp2);
+                fprintf("Ch3:Ch3 %d kp, Ch1:Ch3 %d kp, Ch1:Ch1 %d kp - selecting channel with more kp", kp, kp2);
+
+                tform = Transforms(maxindex);
                 end
-                clear kp2
-                clear kp
             end
+        
             
             lastwarn('');
             warped = cell(1, length(channel));
@@ -156,14 +192,14 @@ function register_SURF(Parent,fpath, nm, D, filename,cropregion, pixel_region_bu
                 if exist(redo, 'dir') ~= 1 || 7
                     mkdir(redo);
                 end
-                imnamed = Tiff(non_reg, 'w8'); 
+                imnamed = Tiff(non_reg); 
                 setTag(imnamed, tags);
                 write(imnamed, wObj, 'tif');
                 fprintf("Bummer, %s was not automatically registered, please try manually. Sorry!\n", filename{z});
                 %save og nuclei also
                 new_nuc = sprintf('%s/NUCLEI_%s_%s.tif', redo, filename{k}, nm{t});
                 if exist(new_nuc, 'file') ~= 2
-                    rrnuc = Tiff(sprintf('%s/NUCLEI_%s_%s.tif', redo, filename{k}, nm{t}), 'w8');
+                    rrnuc = Tiff(sprintf('%s/NUCLEI_%s_%s.tif', redo, filename{k}, nm{t}));
                     setTag(rrnuc, tags); %set Bigtiff tags
                     write(rrnuc, nuc_ref); %writes the bigtiff image
                     close(rrnuc); %close the image
