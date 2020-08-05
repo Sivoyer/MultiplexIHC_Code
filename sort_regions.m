@@ -1,6 +1,6 @@
 
  
-function [image, maxcol, maxrow, pixel_region_buff, cropregion, idx, rois, pos, k,nm] = sort_regions(D, filename, xy, xml_files, fpath)
+function [image, maxcol, maxrow, pixel_region_buff, cropregion, idx, rois, pos, k,nm] = sort_regions(D, buff, filename, xy, xml_files, fpath)
     rois = [xy, upper(xml_files.name(1:end-4))]; %save each xml ROI
     idx = length(rois);
     k = find(contains(filename, rois(idx))); %get index of image
@@ -11,24 +11,23 @@ function [image, maxcol, maxrow, pixel_region_buff, cropregion, idx, rois, pos, 
     maxcol = imgsizeinfo(1).Width;
     maxrow = imgsizeinfo(1).Height;
     
-    %'position' formatting for SVS image from ScanScope .XML file
+     %'position' formatting
+    cpos = cell(1,length(pos));
     for r = 1:length(rois)-1 
-        row = [rois{r}(6) rois{r}(6)+(rois{r}(8) - rois{r}(7))];
-        col = [rois{r}(1) rois{r}(1)+(rois{r}(2) - rois{r}(1))];
-        pos{r} = [row,col]; %[row start, row stop, col start, col stop]
+        croi = sortrows(rois{r});
+        crow = [croi(5) croi(6)];
+        ccol = [croi(1) croi(3)];
+        cpos{r} = [crow,ccol]; %[row start, row stop, col start, col stop]
     end
-    % pos{1} = 0.4541    0.7053    1.7944    2.4700
-    
     
     %pixel region formatting for reading with buffer
-    buff=1500;
-    pixel_region_buff = cell(1,length(pos));
-    cropregion = cell(1,length(pos));
-    for i = 1:length(pos)
-       rowstart = pos{i}([1])-buff;
-       rowstop =pos{i}([2])+buff; 
-       colstart = pos{i}([3])-buff;
-       colstop = pos{i}([4])+buff;
+    pixel_region_buff = cell(1,length(cpos));
+    cropregion = cell(1,length(cpos));
+    for i = 1:length(cpos)
+       rowstart = cpos{i}([1])-buff;
+       rowstop =cpos{i}([2])+buff; 
+       colstart = cpos{i}([3])-buff;
+       colstop = cpos{i}([4])+buff;
        if colstart <= 0
            colstart = 1;
        end
@@ -42,23 +41,17 @@ function [image, maxcol, maxrow, pixel_region_buff, cropregion, idx, rois, pos, 
            rowstop = maxrow;
        end
      pixel_region_buff{i} = {[rowstart, rowstop],[colstart, colstop]};
-     cropregion{i} = [buff, buff, (pos{i}([4])-pos{i}([3])), (pos{i}([2])-pos{i}([1]))];
+     cropregion{i} = [buff, buff, (cpos{i}([4])-cpos{i}([3])), (cpos{i}([2])-cpos{i}([1]))];
     end
     
-    regionnum = length(pos);
+    regionnum = length(pixel_region_buff);
     fprintf("%d regions found on this slide\n", regionnum);
 %     
-    
+
    %create region folder struture inside of Registered_Regions folder
     nm = cell(1, regionnum);
     for w=1:regionnum
-        if w <= 9
-            nm{w} = sprintf('ROI0%d', w);
-        else
-            nm{w} = sprintf('ROI%d', w);
-        end
-        
-        %later make an input var so this is flexible
+        nm{w} = sprintf('ROI%02d', w);
         registered_dir = 'Registered_Regions';
         
         name = fullfile(D, registered_dir, nm{w});
