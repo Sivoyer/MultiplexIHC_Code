@@ -66,14 +66,14 @@ function register_SURF(Parent,fpath, nm, D, filename,cropregion, pixel_region_bu
                 if exist(redo, 'dir') ~= 1 || 7
                     mkdir(redo);
                 end
-                imnamed = Tiff(non_reg, 'w8'); 
+                imnamed = Tiff(non_reg); 
                 setTag(imnamed, tags);
                 write(imnamed, wObj, 'tif');
                 fprintf("Bummer, %s was not automatically registered, please try manually. Sorry!\n", filename{z});
                 %save og nuclei also
                 new_nuc = sprintf('%s/NUCLEI_%s_%s.tif', redo, filename{k}, nm{t});
                 if exist(new_nuc, 'file') ~= 2
-                    rrnuc = Tiff(sprintf('%s/NUCLEI_%s_%s.tif', redo, filename{k}, nm{t}), 'w8');
+                    rrnuc = Tiff(sprintf('%s/NUCLEI_%s_%s.tif', redo, filename{k}, nm{t}));
                     setTag(rrnuc, tags); %set Bigtiff tags
                     write(rrnuc, nuc_ref); %writes the bigtiff image
                     close(rrnuc); %close the image
@@ -114,7 +114,7 @@ function register_SURF(Parent,fpath, nm, D, filename,cropregion, pixel_region_bu
                 ip2 = length(indxPairs2);
 
                 [tform2, inlierDistorted2, ~, ~] = estimateGeometricTransform(...
-                             matchedObj2, matchedRef2,  'similarity', 'MaxNumTrials',100000, 'Confidence',96, 'MaxDistance', 5);
+                             matchedObj2, matchedRef2,  'similarity', 'MaxNumTrials',50000, 'Confidence',96, 'MaxDistance', 5);
                 kp2 = length(inlierDistorted2);
                 fprintf("%d matching keypoints found out of %d in Ch2 ref\n", kp2, ip2);
             
@@ -145,14 +145,14 @@ function register_SURF(Parent,fpath, nm, D, filename,cropregion, pixel_region_bu
                 if exist(redo, 'dir') ~= 1 || 7
                     mkdir(redo);
                 end
-                imnamed = Tiff(non_reg, 'w8'); 
+                imnamed = Tiff(non_reg); 
                 setTag(imnamed, tags);
                 write(imnamed, wObj, 'tif');
                 fprintf("Bummer, %s was not automatically registered, please try manually. Sorry!\n", filename{z});
                 %save og nuclei also
                 new_nuc = sprintf('%s/NUCLEI_%s_%s.tif', redo, filename{k}, nm{t});
                 if exist(new_nuc, 'file') ~= 2
-                    rrnuc = Tiff(sprintf('%s/NUCLEI_%s_%s.tif', redo, filename{k}, nm{t}), 'w8');
+                    rrnuc = Tiff(sprintf('%s/NUCLEI_%s_%s.tif', redo, filename{k}, nm{t}));
                     setTag(rrnuc, tags); %set Bigtiff tags
                     write(rrnuc, nuc_ref); %writes the bigtiff image
                     close(rrnuc); %close the image
