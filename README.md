@@ -1,6 +1,6 @@
 # MultiplexIHC_Code
 
-Multiplex IHC allows for the simultaneous detection of multiple Ab targets in the same tissue section using published methods previously described1,2.This protocol contains detailed instructions on how to prepare files and run the image processing pipeline for mIHC SVS images in a GUI or command line, making it accessible to biologist and labs without computational specialty. 
+Multiplex IHC allows for the simultaneous detection of multiple Ab targets in the same tissue section using published methods previously described (1,2).
 
 REFERENCES
 
