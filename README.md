@@ -12,6 +12,6 @@ This multiplex IHC image analysis pipeline provides a method to analyze cohorts 
 
 Detailed steps can be found on the protocols.io link:
 
-[protocols.io workflow](dx.doi.org/10.17504/protocols.io.bsqjndun)
+[protocols.io workflow](https://www.protocols.io/view/htan-multiplex-ihc-image-cytometry-v0-1-eq2lyp8qplx9/v1)
  
 
